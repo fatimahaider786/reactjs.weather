@@ -1,28 +1,30 @@
 import "./App.css"
-import { useState } from "react";
-import axios from "axios";
+import { useState } from "react"
+import axios from "axios"
 function App() {
   const [city, setCity] = useState("")
   const [country, setCountry] = useState("")
 
   const [temp, setTemp] = useState(0)
   const [fahrenheit, setFahrenheit] = useState(0)
+
   const [heatIndexC, setHeatIndexC] = useState(0)
   const [heatIndexF, setHeatIndexF] = useState(0)
-  const [lastUpdated, setLastUpdated] = useState("");
-  const [lastUpdatedEpoch, setLastUpdatedEpoch] = useState("");
 
-  const [visibilityKm, setVisibilityKm] = useState(0);
-  const [visibilityMiles, setVisibilityMiles] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(0)
+  const [lastUpdatedEpoch, setLastUpdatedEpoch] = useState(0)
 
-  const [windDegree, setWindDegree] = useState(0);
-  const [windDir, setWindDir] = useState("");
+  const [visibilityKm, setVisibilityKm] = useState(0)
+  const [visibilityMiles, setVisibilityMiles] = useState(0)
 
-  const [windKph, setWindKph] = useState(0);
-  const [windMph, setWindMph] = useState(0);
+  const [windDegree, setWindDegree] = useState(0)
+  const [windDir, setWindDir] = useState(0)
 
-  const [windChillC, setWindChillC] = useState(0);
-  const [windChillF, setWindChillF] = useState(0);
+  const [windKph, setWindKph] = useState(0)
+  const [windMph, setWindMph] = useState(0)
+
+  const [windChillC, setWindChillC] = useState(0)
+  const [windChillF, setWindChillF] = useState(0)
 
   const [pressureIn, setPressureIn] = useState(0);
   const [pressureMb, setPressureMb] = useState(0);
@@ -60,8 +62,9 @@ function App() {
       );
       setTemp(weather.data.current.temp_c)
       setFahrenheit(weather.data.current.temp_f)
-      setHeatIndexC(weather.data.current.heatindex_c)
-      setHeatIndexF(weather.data.current.heatindex_f)
+      setHeatIndexC(weather.data.current.heatindex_c);
+      setHeatIndexF(weather.data.current.heatindex_f);
+
       setLastUpdated(weather.data.current.last_updated);
       setLastUpdatedEpoch(weather.data.current.last_updated_epoch);
 
@@ -154,12 +157,13 @@ function App() {
            onChange={handelChange}
         />
         <input type="text"
+
           placeholder="country"
           name="country"
           onChange={handelChangeCountry}
         />
         <button type="submit">Submit</button>
-      </form>
+       </form>
       </div>
     </>
   )

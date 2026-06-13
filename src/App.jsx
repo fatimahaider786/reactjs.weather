@@ -1,171 +1,137 @@
-import "./App.css"
-import { useState } from "react"
-import axios from "axios"
+import "./App.css";
+import { useState } from "react";
+import axios from "axios";
+
 function App() {
-  const [city, setCity] = useState("")
-  const [country, setCountry] = useState("")
+  const [city, setCity] = useState("");
+  const [countryInput, setCountryInput] = useState("");
+  const [weatherData, setWeatherData] = useState(null);
+  const [locationData, setLocationData] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [temp, setTemp] = useState(0)
-  const [fahrenheit, setFahrenheit] = useState(0)
-
-  const [heatIndexC, setHeatIndexC] = useState(0)
-  const [heatIndexF, setHeatIndexF] = useState(0)
-
-  const [lastUpdated, setLastUpdated] = useState(0)
-  const [lastUpdatedEpoch, setLastUpdatedEpoch] = useState(0)
-
-  const [visibilityKm, setVisibilityKm] = useState(0)
-  const [visibilityMiles, setVisibilityMiles] = useState(0)
-
-  const [windDegree, setWindDegree] = useState(0)
-  const [windDir, setWindDir] = useState(0)
-
-  const [windKph, setWindKph] = useState(0)
-  const [windMph, setWindMph] = useState(0)
-
-  const [windChillC, setWindChillC] = useState(0)
-  const [windChillF, setWindChillF] = useState(0)
-
-  const [pressureIn, setPressureIn] = useState(0);
-  const [pressureMb, setPressureMb] = useState(0);
-
-  const [precipIn, setPrecipIn] = useState(0);
-  const [precipMm, setPrecipMm] = useState(0);
-
-  const [humidity, setHumidity] = useState(0);
-
-  const [dewPointC, setDewPointC] = useState(0);
-  const [dewPointF, setDewPointF] = useState(0);
-
-  const [feelsLikeC, setFeelsLikeC] = useState(0);
-  const [feelsLikeF, setFeelsLikeF] = useState(0);
-
-  const [isDay, setIsDay] = useState(0);
-
-  const [gustKph, setGustKph] = useState(0);
-  const [gustMph, setGustMph] = useState(0);
-
-
-
-
-  const handelChange = (e) => {
-    setCity(e.target.value)
-  };
-  const handelChangeCountry = (e) => {
-    setCountry(e.target.value)
-  };
-  const handelSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    
     try {
-      const weather = await axios.get(
-        ` https://p2pclouds.up.railway.app/v1/learn/weather?city=${city}`
+      const searchQuery = countryInput ? `${city},${countryInput}` : city;
+
+      // ⚠️ Note: Agar aapne apna backend bana liya hai to URL ko change karke
+      // `http://localhost:5000/api/weather?city=${searchQuery}` kar dein.
+      const response = await axios.get(
+        `https://p2pclouds.up.railway.app/v1/learn/weather?city=${searchQuery}`
       );
-      setTemp(weather.data.current.temp_c)
-      setFahrenheit(weather.data.current.temp_f)
-      setHeatIndexC(weather.data.current.heatindex_c);
-      setHeatIndexF(weather.data.current.heatindex_f);
-
-      setLastUpdated(weather.data.current.last_updated);
-      setLastUpdatedEpoch(weather.data.current.last_updated_epoch);
-
-      setVisibilityKm(weather.data.current.vis_km);
-      setVisibilityMiles(weather.data.current.vis_miles);
-
-      setWindDegree(weather.data.current.wind_degree);
-      setWindDir(weather.data.current.wind_dir);
-
-      setWindKph(weather.data.current.wind_kph);
-      setWindMph(weather.data.current.wind_mph);
-
-      setWindChillC(weather.data.current.windchill_c);
-      setWindChillF(weather.data.current.windchill_f);
-      setPressureIn(weather.data.current.pressure_in);
-      setPressureMb(weather.data.current.pressure_mb);
-
-      setPrecipIn(weather.data.current.precip_in);
-      setPrecipMm(weather.data.current.precip_mm);
-
-      setHumidity(weather.data.current.humidity);
-
-      setDewPointC(weather.data.current.dewpoint_c);
-      setDewPointF(weather.data.current.dewpoint_f);
-
-      setFeelsLikeC(weather.data.current.feelslike_c);
-      setFeelsLikeF(weather.data.current.feelslike_f);
-
-      setIsDay(weather.data.current.is_day);
-
-      setGustKph(weather.data.current.gust_kph);
-      setGustMph(weather.data.current.gust_mph);
-
-
-
-    } catch (error) {
-      console.error("error findind the weather data", error);
+      
+      if (response.data && response.data.current) {
+        setWeatherData(response.data.current);
+        setLocationData(response.data.location);
+      } else {
+        setError("Invalid data received from server.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("City or Country not found! Please check spelling.");
+      setWeatherData(null);
+      setLocationData(null);
+    } finally {
+      setLoading(false);
     }
-
   };
+
   return (
-    <>
-    <div className="container">
+    <div className="app-container">
+      <div className="weather-card">
+        <h1 className="title"> Weather App</h1>
+        
+        {/* Search Form */}
+        <form className="form" onSubmit={handleSubmit}>
+          <div className="input-group">
+            <input 
+              type="text" 
+              placeholder="Enter City (e.g. Lahore)" 
+              value={city} 
+              onChange={(e) => setCity(e.target.value)} 
+              required
+            />
+            <input 
+              type="text" 
+              placeholder="Enter Country (Optional)" 
+              value={countryInput} 
+              onChange={(e) => setCountryInput(e.target.value)} 
+            />
+          </div>
+          <button type="submit" className="search-btn">
+            {loading ? "Searching..." : "Get Weather"}
+          </button>
+        </form>
 
-      <h1> Temprature :{temp}</h1>
+        {/* Loading & Errors */}
+        {loading && <div className="loader">Fetching latest weather data...</div>}
+        {error && <div className="error-msg">{error}</div>}
 
-      <p> Fahrenheit :{fahrenheit}</p>
+        {/* Weather Dashboard Output */}
+        {weatherData && locationData && (
+          <div className="weather-dashboard">
+            
+            <div className="main-info">
+              <h2>{locationData.name}, <span className="country-name">{locationData.country}</span></h2>
+              <div className="temp-display">
+                <span className="celsius">{weatherData.temp_c}°C</span>
+                <span className="fahrenheit">/ {weatherData.temp_f}°F</span>
+              </div>
+              <p className="status-tag">
+                Time: {weatherData.is_day === 1 ? "☀️ Day Time" : "🌙 Night Time"}
+              </p>
+            </div>
 
-      <p> heat Index (C) : {heatIndexC}</p>
-      <p> heat Index (F) : {heatIndexF}</p>
+            <hr className="divider" />
 
-      <p>Last updated (readable): {lastUpdated}</p>
-      <p>Last updated (epoch): {lastUpdatedEpoch}</p>
+            <div className="weather-grid">
+              <div className="grid-item">
+                <span>Feels Like</span>
+                <strong>{weatherData.feelslike_c}°C ({weatherData.feelslike_f}°F)</strong>
+              </div>
+              <div className="grid-item">
+                <span>Humidity</span>
+                <strong>{weatherData.humidity}%</strong>
+              </div>
+              <div className="grid-item">
+                <span>Wind Speed</span>
+                <strong>{weatherData.wind_kph} Kph ({weatherData.wind_mph} Mph)</strong>
+              </div>
+              <div className="grid-item">
+                <span>Wind Direction</span>
+                <strong>{weatherData.wind_dir} ({weatherData.wind_degree}°)</strong>
+              </div>
+              <div className="grid-item">
+                <span>Visibility</span>
+                <strong>{weatherData.vis_km} Km ({weatherData.vis_miles} Mi)</strong>
+              </div>
+              <div className="grid-item">
+                <span>Pressure</span>
+                <strong>{weatherData.pressure_mb} mb</strong>
+              </div>
+              <div className="grid-item">
+                <span>Precipitation</span>
+                <strong>{weatherData.precip_mm} mm</strong>
+              </div>
+              <div className="grid-item">
+                <span>Wind Chill</span>
+                <strong>{weatherData.windchill_c}°C</strong>
+              </div>
+            </div>
 
-      <p>Visibility (km): {visibilityKm}</p>
-      <p>Visibility (miles): {visibilityMiles}</p>
+            <div className="footer-note">
+              Last Updated: {weatherData.last_updated}
+            </div>
 
-      <p>Wind direction (degree): {windDegree}</p>
-      <p>Wind direction (compass): {windDir}</p>
-
-      <p>Wind speed (kph): {windKph}</p>
-      <p>Wind speed (mph): {windMph}</p>
-
-      <p>Wind chill (°C): {windChillC}</p>
-      <p>Wind chill (°F): {windChillF}</p>
-
-      <p>Atmospheric Pressure (in): {pressureIn}</p>
-      <p>Atmospheric Pressure (mb): {pressureMb}</p>
-
-      <p>Precipitation (in): {precipIn}</p>
-      <p>Precipitation (mm): {precipMm}</p>
-
-      <p>Humidity: {humidity}%</p>
-
-      <p>Dew Point (°C): {dewPointC}</p>
-      <p>Dew Point (°F): {dewPointF}</p>
-
-      <p>Feels Like (°C): {feelsLikeC}</p>
-      <p>Feels Like (°F): {feelsLikeF}</p>
-
-      <p>Day or Night (1 = Day, 0 = Night): {isDay}</p>
-
-      <p>Wind Gust (kph): {gustKph}</p>
-      <p>Wind Gust (mph): {gustMph}</p>
-
-      <form className="form" onSubmit={handelSubmit}>
-        <input type="text"
-          placeholder="city"
-          name="city"
-           onChange={handelChange}
-        />
-        <input type="text"
-
-          placeholder="country"
-          name="country"
-          onChange={handelChangeCountry}
-        />
-        <button type="submit">Submit</button>
-       </form>
+          </div>
+        )}
       </div>
-    </>
-  )
+    </div>
+  );
 }
-export default App 
+
+export default App;

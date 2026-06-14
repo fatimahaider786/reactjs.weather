@@ -1,97 +1,230 @@
-/* Reset */
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Page background */
 body {
-  background-color: skyblue;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 40px 10px;
+  align-items: center;
+  padding: 20px;
 }
 
-/* App container */
-.container {
+.app-container {
   width: 100%;
-  color: black;
   max-width: 600px;
-  background: silver;
-  padding: 25px;
-  border-radius: 20px;
-  box-shadow: black;
 }
 
-/* Headings */
-h1 {
-  font-weight: bold;
-  margin-bottom: 15px;
-  color: slateblue;
+.weather-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 30px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
-p { 
-  background-color:springgreen;
-  padding: 10px 15px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  border-left: 5px solid #01a1d8;
-  font-size: 1rem;
+.title {
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
+  gap: 15px;
 }
 
-/* Inputs */
-.form input {
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.input-group input {
+  flex: 1;
   padding: 12px;
-  margin-bottom: 12px;
-  border-radius: 10px;
   border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
   outline: none;
-  background: sandybrown;
-  border: 2px solid transparent;
-  color: black;
+  transition: 0.3s;
 }
 
-.form input:focus {
-  border-color: #01a1d8;
-  background: palegreen;
+.input-group input::placeholder {
+  color: #ddd;
 }
 
-/* Button */
-.form button {
-  padding: 12px;
+.input-group input:focus {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.search-btn {
+  padding: 14px;
   border: none;
-  border-radius: 10px;
-  background: salmon;
-  color: plum;
-  font-size: 1.1rem;
+  border-radius: 8px;
+  background: #00c6ff;
+  background: -webkit-linear-gradient(to right, #0072ff, #00c6ff);
+  background: linear-gradient(to right, #0072ff, #00c6ff);
+  color: white;
+  font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+  transition: 0.3s;
 }
 
-.form button:hover {
-  background: seagreen;
+.search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 198, 255, 0.4);
 }
 
-/* Responsive */
+.loader {
+  text-align: center;
+  margin-top: 20px;
+  color: #00c6ff;
+}
+
+.error-msg {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid red;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.weather-dashboard {
+  margin-top: 30px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.main-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.main-info h2 {
+  font-size: 28px;
+  margin-bottom: 5px;
+}
+
+.country-name {
+  color: #00c6ff;
+}
+
+.temp-display {
+  margin: 15px 0;
+}
+
+.celsius {
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.fahrenheit {
+  font-size: 20px;
+  color: #ccc;
+}
+
+.status-tag {
+  background: rgba(255, 255, 255, 0.15);
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.divider {
+  border: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 20px 0;
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.grid-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.grid-item span {
+  font-size: 12px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grid-item strong {
+  font-size: 16px;
+}
+
+.footer-note {
+  text-align: center;
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 25px;
+}
+
+
+/* App.css ke bilkul aakhiri mein ye append kar dein */
+.history-list {
+  list-style: none;
+  margin-top: 15px;
+  padding: 0;
+}
+
+.history-item {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 18px;
+  margin: 8px 0;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.history-item:hover {
+  transform: scale(1.01);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.history-temp {
+  color: #00c6ff;
+  font-size: 16px;
+}
+
+/* Mobile Responsiveness */
 @media (max-width: 480px) {
-  .container {
-    padding: 18px;
+  .input-group {
+    flex-direction: column;
   }
-
-  h1 {
-    font-size: 1.25rem;
-  }
-
-  p {
-    font-size: 0.95rem;
+  .weather-grid {
+    grid-template-columns: 1fr;
   }
 }

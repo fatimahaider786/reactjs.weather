@@ -189,6 +189,35 @@ body {
   margin-top: 25px;
 }
 
+
+.history-list {
+  list-style: none;
+  margin-top: 15px;
+  padding: 0;
+}
+
+.history-item {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 18px;
+  margin: 8px 0;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.history-item:hover {
+  transform: scale(1.01);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.history-temp {
+  color: #00c6ff;
+  font-size: 16px;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
   .input-group {

@@ -190,6 +190,7 @@ body {
 }
 
 
+/* App.css ke bilkul aakhiri mein ye append kar dein */
 .history-list {
   list-style: none;
   margin-top: 15px;

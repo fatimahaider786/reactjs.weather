@@ -11,35 +11,50 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchHistory = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/history");
-      setHistory(res.data);
-    } catch (err) {
-      console.error("History fetch error:", err);
+  // Local Storage se history load karein taake Vercel par live history dikhe bina backend ke!
+  const loadLocalHistory = () => {
+    const savedHistory = localStorage.getItem("weather_history");
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
     }
   };
 
   useEffect(() => {
-    fetchHistory();
+    loadLocalHistory();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    setWeatherData(null);
+    setLocationData(null);
     
     try {
-      const searchQuery = countryInput ? `${city},${countryInput}` : city;
-      const response = await axios.get(`http://localhost:5000/api/weather?city=${searchQuery}`);
+      // Direct use that same Railway API which backend was using! No need for API key configurations.
+      const response = await axios.get(`https://p2pclouds.up.railway.app/v1/learn/weather?city=${city}`);
       
-      setWeatherData(response.data.current);
-      setLocationData(response.data.location);
-      
-      fetchHistory(); 
+      if (response.data && response.data.current) {
+        setWeatherData(response.data.current);
+        setLocationData(response.data.location);
+        
+        // Save to browser LocalStorage automatically to show recent searches on Vercel
+        const newLog = {
+          city: response.data.location.name,
+          country: response.data.location.country,
+          temp: `${response.data.current.temp_c}°C`
+        };
+        
+        let currentHistory = localStorage.getItem("weather_history") ? JSON.parse(localStorage.getItem("weather_history")) : [];
+        currentHistory.unshift(newLog);
+        if (currentHistory.length > 5) currentHistory.pop(); // Limit to 5
+        localStorage.setItem("weather_history", JSON.stringify(currentHistory));
+        setHistory(currentHistory);
+      } else {
+        throw new Error("Invalid Data Structure");
+      }
     } catch (err) {
       setError("City not found! Please check spelling.");
-      setWeatherData(null);
     } finally {
       setLoading(false);
     }
@@ -48,7 +63,7 @@ function App() {
   return (
     <div className="app-container">
       <div className="weather-card">
-        <h1 className="title"> Weather App</h1>
+        <h1 className="title">Weather App</h1>
         
         <form className="form" onSubmit={handleSubmit}>
           <div className="input-group">
@@ -92,12 +107,10 @@ function App() {
           </div>
         )}
 
-
         <hr className="divider" />
 
-
         <div className="history-section">
-          <h3>📜 Recent Searches (Saved in MongoDB)</h3>
+          <h3>📜 Recent Searches (Saved History)</h3>
           {history.length === 0 ? (
             <p style={{ color: '#aaa', marginTop: '10px', textAlign: 'center' }}>No recent searches yet.</p>
           ) : (

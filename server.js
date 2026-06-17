@@ -8,18 +8,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Temporary backup array (Agar database connect na ho to yahan save hoga)
 let backupHistory = [];
-
 const dbURI = process.env.MONGO_URI;
 
 // Database Connection
-mongoose.connect(dbURI, {
-  serverSelectionTimeoutMS: 5000,
-})
+mongoose.connect(dbURI)
 .then(() => console.log("🟢 MongoDB Atlas Connected Successfully!"))
 .catch((err) => {
-  console.log("⚠️ MongoDB Connect nahi ho saka. Using Local Backup Mode!");
+  console.log("⚠️ MongoDB Connect nahi ho saka:", err.message);
 });
 
 // Mongoose Schema
@@ -32,7 +28,7 @@ const searchHistorySchema = new mongoose.Schema({
 
 const History = mongoose.model('History', searchHistorySchema);
 
-// 1. Weather Route: Fetch global data 
+// 1. Weather Route
 app.get('/api/weather', async (req, res) => {
   const { city } = req.query;
   if (!city) {
@@ -40,7 +36,9 @@ app.get('/api/weather', async (req, res) => {
   }
 
   try {
-    const response = await axios.get(`https://api.weatherapi.com/v1/current.json?key=719df68903e144a29a0120015241606&q=${city}`);
+    // API KEY ko process.env se lene ke liye update kiya hai
+    const apiKey = process.env.WEATHER_API_KEY || "719df68903e144a29a0120015241606";
+    const response = await axios.get(`https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}`);
     
     const weatherLog = {
       city: response.data.location.name,
@@ -49,7 +47,6 @@ app.get('/api/weather', async (req, res) => {
       searchedAt: new Date()
     };
 
-    // Data History mein save karna
     if (mongoose.connection.readyState === 1) {
       const newSearch = new History(weatherLog);
       await newSearch.save().catch(e => console.log("Save error:", e.message));
@@ -78,6 +75,9 @@ app.get('/api/history', async (req, res) => {
     res.status(500).json({ error: "History fetch nahi ho saki" });
   }
 });
+
+// Vercel ke liye export zaroori hota hai
+module.exports = app;
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

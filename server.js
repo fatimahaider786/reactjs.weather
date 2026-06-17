@@ -1,4 +1,3 @@
-require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
@@ -8,14 +7,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Temporary backup array (Agar cloud internet block ho to search history yahan save hogi)
 let backupHistory = [];
-const dbURI = process.env.MONGO_URI;
 
-// Database Connection
-mongoose.connect(dbURI)
+const dbURI = "mongodb+srv://aimanfatima888786_db_user:fsha7654@cluster0.wdsyhcq.mongodb.net/weatherDB?retryWrites=true&w=majority&appName=Cluster0";
+
+// Database Connection with catch block that doesn't halt the app
+mongoose.connect(dbURI, {
+  serverSelectionTimeoutMS: 5000, // Sirf 5 seconds wait karega, hang nahi hoga
+})
 .then(() => console.log("🟢 MongoDB Atlas Connected Successfully!"))
 .catch((err) => {
-  console.log("⚠️ MongoDB Connect nahi ho saka:", err.message);
+  console.log("⚠️ MongoDB Connect nahi ho saka (Network Blocked). Using Local Backup Mode!");
 });
 
 // Mongoose Schema
@@ -28,17 +31,11 @@ const searchHistorySchema = new mongoose.Schema({
 
 const History = mongoose.model('History', searchHistorySchema);
 
-// 1. Weather Route
+// 3. Weather Route: Fetch also saves data intelligently
 app.get('/api/weather', async (req, res) => {
   const { city } = req.query;
-  if (!city) {
-    return res.status(400).json({ error: "City name is required" });
-  }
-
   try {
-    // API KEY ko process.env se lene ke liye update kiya hai
-    const apiKey = process.env.WEATHER_API_KEY || "719df68903e144a29a0120015241606";
-    const response = await axios.get(`https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}`);
+    const response = await axios.get(`https://p2pclouds.up.railway.app/v1/learn/weather?city=${city}`);
     
     const weatherLog = {
       city: response.data.location.name,
@@ -47,9 +44,10 @@ app.get('/api/weather', async (req, res) => {
       searchedAt: new Date()
     };
 
+    // Try saving to MongoDB, if fails, save to Backup Array
     if (mongoose.connection.readyState === 1) {
       const newSearch = new History(weatherLog);
-      await newSearch.save().catch(e => console.log("Save error:", e.message));
+      await newSearch.save().catch(e => console.log("Save error"));
     } else {
       backupHistory.unshift(weatherLog);
       if (backupHistory.length > 5) backupHistory.pop();
@@ -58,26 +56,23 @@ app.get('/api/weather', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error("API Fetch Error:", error.message);
-    res.status(404).json({ error: "City not found or API Error" });
+    res.status(500).json({ error: "Weather data fetch nahi ho saka" });
   }
 });
 
-// 2. History Route
+// 4. History Route: Smart Fetch
 app.get('/api/history', async (req, res) => {
   try {
     if (mongoose.connection.readyState === 1) {
       const allHistory = await History.find().sort({ searchedAt: -1 }).limit(5);
       res.json(allHistory);
     } else {
-      res.json(backupHistory);
+      res.json(backupHistory); // Return backup data if offline
     }
   } catch (error) {
     res.status(500).json({ error: "History fetch nahi ho saki" });
   }
 });
 
-// Vercel ke liye export zaroori hota hai
-module.exports = app;
-
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -1,126 +1,107 @@
-import "./App.css";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-
-const BACKEND_URL = "https://beckend-weather.vercel.app/";
+import "./App.css";
 
 function App() {
   const [city, setCity] = useState("");
-  const [countryInput, setCountryInput] = useState("");
   const [weatherData, setWeatherData] = useState(null);
-  const [locationData, setLocationData] = useState(null);
-  const [history, setHistory] = useState([]); 
+  const [history, setHistory] = useState([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  // 🟢 GLOBLAL HISTORY FETCH: Yeh function backend/MongoDB se history lekar aayega
-  const fetchGlobalHistory = async () => {
+  // Check if running on localhost or live production
+  const isLocal = window.location.hostname === "localhost";
+
+  // Base URL configuration based on environment
+  const BACKEND_BASE_URL = isLocal
+    ? "http://localhost:5000"
+    : "https://beckend-weather.vercel.app"; // 🟢 Aapka Live Vercel Backend Link
+
+  // 1. Fetch Search History Function
+  const fetchHistory = async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/history`);
-      setHistory(response.data);
+      const res = await axios.get(`${BACKEND_BASE_URL}/api/history`);
+      setHistory(res.data);
     } catch (err) {
-      console.error("Global history fetch karne mein error:", err);
+      console.error("History fetch error:", err.message);
     }
   };
 
-  // Page load hote hi sabse pehle database se history load hogi
+  // Fetch history on page load
   useEffect(() => {
-    fetchGlobalHistory();
+    fetchHistory();
   }, []);
 
+  // 2. Handle Weather Form Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
     setWeatherData(null);
-    setLocationData(null);
-    
+
+    if (!city.trim()) {
+      setError("Please enter a city name.");
+      return;
+    }
+
     try {
-      
-      const response = await axios.get(`${BACKEND_URL}/api/weather?city=${city}`);
-      
-      if (response.data && response.data.current) {
-        setWeatherData(response.data.current);
-        setLocationData(response.data.location);
-        
-        // 🟢 FIX: Search hone ke baad database se fresh history dubara pull karein
-        fetchGlobalHistory();
-      } else {
-        throw new Error("Invalid Data Structure");
-      }
+      const res = await axios.get(`${BACKEND_BASE_URL}/api/weather?city=${city}`);
+      setWeatherData(res.data);
+      setCity(""); // Input clear karne ke liye
+      fetchHistory(); // Nayi search ke baad history refresh karne ke liye
     } catch (err) {
-      setError("City nahi mili ya backend server offline hai!");
-    } finally {
-      setLoading(false);
+      setError("City not found or server error. Please try again.");
     }
   };
 
   return (
     <div className="app-container">
-      <div className="weather-card">
-        <h1 className="title">Weather App</h1>
-        
-        <form className="form" onSubmit={handleSubmit}>
-          <div className="input-group">
-            <input type="text" placeholder="City..." value={city} onChange={(e) => setCity(e.target.value)} required />
-            <input type="text" placeholder="Country (Optional)..." value={countryInput} onChange={(e) => setCountryInput(e.target.value)} />
+      <h1>Global Weather App</h1>
+      
+      {/* Search Form */}
+      <form onSubmit={handleSubmit} className="search-form">
+        <input
+          type="text"
+          placeholder="Enter city name..."
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+        />
+        <button type="submit">Search</button>
+      </form>
+
+      {/* Error Message */}
+      {error && <p className="error-msg">{error}</p>}
+
+      {/* Weather Result Display */}
+      {weatherData && (
+        <div className="weather-card">
+          <h2>{weatherData.location.name}, {weatherData.location.country}</h2>
+          <div className="weather-info">
+            <img src={weatherData.current.condition.icon} alt="weather icon" />
+            <h3>{weatherData.current.temp_c}°C</h3>
           </div>
-          <button type="submit" className="search-btn">{loading ? "Searching..." : "Get Weather"}</button>
-        </form>
-
-        {error && <div className="error-msg">{error}</div>}
-
-        {weatherData && locationData && (
-          <div className="weather-dashboard">
-            <div className="main-info">
-              <h2>{locationData.name}, <span className="country-name">{locationData.country}</span></h2>
-              <div className="temp-display">
-                <span className="celsius">{weatherData.temp_c}°C</span>
-                <span className="fahrenheit"> / {weatherData.temp_f}°F</span>
-              </div>
-              <span className="status-tag">☀️ Day Time</span>
-            </div>
-
-            <div className="weather-grid">
-              <div className="grid-item">
-                <span>Feels Like</span>
-                <strong>{weatherData.feelslike_c}°C ({weatherData.feelslike_f}°F)</strong>
-              </div>
-              <div className="grid-item">
-                <span>Humidity</span>
-                <strong>{weatherData.humidity}%</strong>
-              </div>
-              <div className="grid-item">
-                <span>Wind Speed</span>
-                <strong>{weatherData.wind_kph} Kph</strong>
-              </div>
-              <div className="grid-item">
-                <span>Wind Direction</span>
-                <strong>{weatherData.wind_dir}</strong>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <hr className="divider" />
-
-        <div className="history-section">
-          <h3>📜 Recent Searches (Global MongoDB History)</h3>
-          {history.length === 0 ? (
-            <p style={{ color: '#aaa', marginTop: '10px', textAlign: 'center' }}>No recent searches yet.</p>
-          ) : (
-            <ul className="history-list">
-              {history.map((item, index) => (
-                <li key={index} className="history-item">
-                  {/* MongoDB ka structure backend par 'city' aur 'country' property save karta hai */}
-                  <span>{item.city}, {item.country}</span>
-                  <strong className="history-temp">{item.temp}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
+          <p>Condition: {weatherData.current.condition.text}</p>
+          <p>Humidity: {weatherData.current.humidity}%</p>
+          <p>Wind Speed: {weatherData.current.wind_kph} kph</p>
         </div>
+      )}
 
+      {/* Search History Section */}
+      <div className="history-section">
+        <h3>Recent Searches (Database Logs)</h3>
+        {history.length === 0 ? (
+          <p>No search history found.</p>
+        ) : (
+          <ul className="history-list">
+            {history.map((item, index) => (
+              <li key={item._id || index} className="history-item">
+                <span className="history-city">{item.city}, {item.country}</span>
+                <span className="history-temp">{item.temp}</span>
+                <span className="history-time">
+                  {new Date(item.searchedAt).toLocaleTimeString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
@@ -10,7 +11,7 @@ app.use(express.json());
 // Temporary backup array (Agar database connect na ho to yahan save hoga)
 let backupHistory = [];
 
-const dbURI = "mongodb+srv://aimanfatima888786_db_user:fsha7654@cluster0.wdsyhcq.mongodb.net/weatherDB?retryWrites=true&w=majority&appName=Cluster0";
+const dbURI = process.env.MONGO_URI;
 
 // Database Connection
 mongoose.connect(dbURI, {
@@ -34,31 +35,17 @@ const History = mongoose.model('History', searchHistorySchema);
 // 1. Weather Route: Fetch global data 
 app.get('/api/weather', async (req, res) => {
   const { city } = req.query;
+  if (!city) {
+    return res.status(400).json({ error: "City name is required" });
+  }
+
   try {
-    // Global Weather API (Poori duniya ka data dene ke liye)
     const response = await axios.get(`https://api.weatherapi.com/v1/current.json?key=719df68903e144a29a0120015241606&q=${city}`);
     
-    
-    const customResponse = {
-      location: {
-        name: response.data.location.name,
-        country: response.data.location.country
-      },
-      current: {
-        temp_c: response.data.current.temp_c,
-        temp_f: response.data.current.temp_f,
-        feelslike_c: response.data.current.feelslike_c,
-        feelslike_f: response.data.current.feelslike_f,
-        humidity: response.data.current.humidity,
-        wind_kph: response.data.current.wind_kph,
-        wind_dir: response.data.current.wind_dir
-      }
-    };
-
     const weatherLog = {
-      city: customResponse.location.name,
-      country: customResponse.location.country,
-      temp: `${customResponse.current.temp_c}°C`,
+      city: response.data.location.name,
+      country: response.data.location.country,
+      temp: `${response.data.current.temp_c}°C`,
       searchedAt: new Date()
     };
 
@@ -71,7 +58,7 @@ app.get('/api/weather', async (req, res) => {
       if (backupHistory.length > 5) backupHistory.pop();
     }
 
-    res.json(customResponse);
+    res.json(response.data);
   } catch (error) {
     console.error("API Fetch Error:", error.message);
     res.status(404).json({ error: "City not found or API Error" });

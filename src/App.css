@@ -189,8 +189,6 @@ body {
   margin-top: 25px;
 }
 
-
-/* App.css ke bilkul aakhiri mein ye append kar dein */
 .history-list {
   list-style: none;
   margin-top: 15px;
@@ -219,7 +217,6 @@ body {
   font-size: 16px;
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 480px) {
   .input-group {
     flex-direction: column;

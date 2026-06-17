@@ -2,6 +2,8 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+const BACKEND_URL = "https://beckend-weather.vercel.app/";
+
 function App() {
   const [city, setCity] = useState("");
   const [countryInput, setCountryInput] = useState("");
@@ -11,16 +13,19 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Browser ki Local Storage se history load karein (Bina backend ke history dikhane ke liye!)
-  const loadLocalHistory = () => {
-    const savedHistory = localStorage.getItem("weather_history");
-    if (savedHistory) {
-      setHistory(JSON.parse(savedHistory));
+  // 🟢 GLOBLAL HISTORY FETCH: Yeh function backend/MongoDB se history lekar aayega
+  const fetchGlobalHistory = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/history`);
+      setHistory(response.data);
+    } catch (err) {
+      console.error("Global history fetch karne mein error:", err);
     }
   };
 
+  // Page load hote hi sabse pehle database se history load hogi
   useEffect(() => {
-    loadLocalHistory();
+    fetchGlobalHistory();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -32,34 +37,19 @@ function App() {
     
     try {
       
-      const response = await axios.get(`https://api.weatherapi.com/v1/current.json?key=719df68903e144a29a0120015241606&q=${city}`);
+      const response = await axios.get(`${BACKEND_URL}/api/weather?city=${city}`);
       
       if (response.data && response.data.current) {
         setWeatherData(response.data.current);
         setLocationData(response.data.location);
         
-        // Browser ke LocalStorage mein recent search automatic save karein
-        const newLog = {
-          city: response.data.location.name,
-          country: response.data.location.country,
-          temp: `${response.data.current.temp_c}°C`
-        };
-        
-        let currentHistory = localStorage.getItem("weather_history") ? JSON.parse(localStorage.getItem("weather_history")) : [];
-        
-        
-        currentHistory = currentHistory.filter(item => item.city.toLowerCase() !== newLog.city.toLowerCase());
-        
-        currentHistory.unshift(newLog);
-        if (currentHistory.length > 5) currentHistory.pop(); // Sirf top 5 searches dikhane ke liye
-        
-        localStorage.setItem("weather_history", JSON.stringify(currentHistory));
-        setHistory(currentHistory);
+        // 🟢 FIX: Search hone ke baad database se fresh history dubara pull karein
+        fetchGlobalHistory();
       } else {
-        throw new Error("Invalid Data");
+        throw new Error("Invalid Data Structure");
       }
     } catch (err) {
-      setError("City not found! Please check the spelling globally (e.g. London, Tokyo, Paris).");
+      setError("City nahi mili ya backend server offline hai!");
     } finally {
       setLoading(false);
     }
@@ -72,7 +62,7 @@ function App() {
         
         <form className="form" onSubmit={handleSubmit}>
           <div className="input-group">
-            <input type="text" placeholder="City (e.g. London, New York)..." value={city} onChange={(e) => setCity(e.target.value)} required />
+            <input type="text" placeholder="City..." value={city} onChange={(e) => setCity(e.target.value)} required />
             <input type="text" placeholder="Country (Optional)..." value={countryInput} onChange={(e) => setCountryInput(e.target.value)} />
           </div>
           <button type="submit" className="search-btn">{loading ? "Searching..." : "Get Weather"}</button>
@@ -88,7 +78,7 @@ function App() {
                 <span className="celsius">{weatherData.temp_c}°C</span>
                 <span className="fahrenheit"> / {weatherData.temp_f}°F</span>
               </div>
-              <span className="status-tag">☀️ Live Data</span>
+              <span className="status-tag">☀️ Day Time</span>
             </div>
 
             <div className="weather-grid">
@@ -115,13 +105,14 @@ function App() {
         <hr className="divider" />
 
         <div className="history-section">
-          <h3>📜 Recent Searches (Saved via LocalStorage)</h3>
+          <h3>📜 Recent Searches (Global MongoDB History)</h3>
           {history.length === 0 ? (
             <p style={{ color: '#aaa', marginTop: '10px', textAlign: 'center' }}>No recent searches yet.</p>
           ) : (
             <ul className="history-list">
               {history.map((item, index) => (
                 <li key={index} className="history-item">
+                  {/* MongoDB ka structure backend par 'city' aur 'country' property save karta hai */}
                   <span>{item.city}, {item.country}</span>
                   <strong className="history-temp">{item.temp}</strong>
                 </li>

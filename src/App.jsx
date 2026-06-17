@@ -2,7 +2,7 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://beckend-weather.vercel.app/";
 
 function App() {
   const [city, setCity] = useState("");

@@ -217,6 +217,7 @@ body {
   font-size: 16px;
 }
 
+/* Mobile Responsiveness */
 @media (max-width: 480px) {
   .input-group {
     flex-direction: column;

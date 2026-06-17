@@ -2,30 +2,25 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const BACKEND_URL = "https://beckend-weather.vercel.app/";
-
 function App() {
   const [city, setCity] = useState("");
   const [countryInput, setCountryInput] = useState("");
   const [weatherData, setWeatherData] = useState(null);
   const [locationData, setLocationData] = useState(null);
-  const [history, setHistory] = useState([]); 
+  const [history, setHistory] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🟢 GLOBLAL HISTORY FETCH: Yeh function backend/MongoDB se history lekar aayega
-  const fetchGlobalHistory = async () => {
-    try {
-      const response = await axios.get(`${BACKEND_URL}/api/history`);
-      setHistory(response.data);
-    } catch (err) {
-      console.error("Global history fetch karne mein error:", err);
+  // Local Storage se history load karein taake Vercel par live history dikhe bina backend ke!
+  const loadLocalHistory = () => {
+    const savedHistory = localStorage.getItem("weather_history");
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
     }
   };
 
-  // Page load hote hi sabse pehle database se history load hogi
   useEffect(() => {
-    fetchGlobalHistory();
+    loadLocalHistory();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -36,20 +31,30 @@ function App() {
     setLocationData(null);
     
     try {
-      
-      const response = await axios.get(`${BACKEND_URL}/api/weather?city=${city}`);
+      // Direct use that same Railway API which backend was using! No need for API key configurations.
+      const response = await axios.get(`https://p2pclouds.up.railway.app/v1/learn/weather?city=${city}`);
       
       if (response.data && response.data.current) {
         setWeatherData(response.data.current);
         setLocationData(response.data.location);
         
-        // 🟢 FIX: Search hone ke baad database se fresh history dubara pull karein
-        fetchGlobalHistory();
+        // Save to browser LocalStorage automatically to show recent searches on Vercel
+        const newLog = {
+          city: response.data.location.name,
+          country: response.data.location.country,
+          temp: `${response.data.current.temp_c}°C`
+        };
+        
+        let currentHistory = localStorage.getItem("weather_history") ? JSON.parse(localStorage.getItem("weather_history")) : [];
+        currentHistory.unshift(newLog);
+        if (currentHistory.length > 5) currentHistory.pop(); // Limit to 5
+        localStorage.setItem("weather_history", JSON.stringify(currentHistory));
+        setHistory(currentHistory);
       } else {
         throw new Error("Invalid Data Structure");
       }
     } catch (err) {
-      setError("City nahi mili ya backend server offline hai!");
+      setError("City not found! Please check spelling.");
     } finally {
       setLoading(false);
     }
@@ -62,10 +67,23 @@ function App() {
         
         <form className="form" onSubmit={handleSubmit}>
           <div className="input-group">
-            <input type="text" placeholder="City..." value={city} onChange={(e) => setCity(e.target.value)} required />
-            <input type="text" placeholder="Country (Optional)..." value={countryInput} onChange={(e) => setCountryInput(e.target.value)} />
+            <input 
+              type="text" 
+              placeholder="City..." 
+              value={city} 
+              onChange={(e) => setCity(e.target.value)} 
+              required 
+            />
+            <input 
+              type="text" 
+              placeholder="Country (Optional)..." 
+              value={countryInput} 
+              onChange={(e) => setCountryInput(e.target.value)} 
+            />
           </div>
-          <button type="submit" className="search-btn">{loading ? "Searching..." : "Get Weather"}</button>
+          <button type="submit" className="search-btn">
+            {loading ? "Searching..." : "Get Weather"}
+          </button>
         </form>
 
         {error && <div className="error-msg">{error}</div>}
@@ -105,14 +123,13 @@ function App() {
         <hr className="divider" />
 
         <div className="history-section">
-          <h3>📜 Recent Searches (Global MongoDB History)</h3>
+          <h3>📜 Recent Searches (Saved History)</h3>
           {history.length === 0 ? (
             <p style={{ color: '#aaa', marginTop: '10px', textAlign: 'center' }}>No recent searches yet.</p>
           ) : (
             <ul className="history-list">
               {history.map((item, index) => (
                 <li key={index} className="history-item">
-                  {/* MongoDB ka structure backend par 'city' aur 'country' property save karta hai */}
                   <span>{item.city}, {item.country}</span>
                   <strong className="history-temp">{item.temp}</strong>
                 </li>
